@@ -51,6 +51,7 @@ public class CalciteUtil {
         //用一个数组存表名
         List<String> tableList = new ArrayList<String>();
         //1.获取表名
+        //TODO 实现表join（可先完成单表查询再实现）
         getTables(fromNode,tableList);
         //2.获取所需字段
         SqlNodeList selectList = sqlSelect.getSelectList();
@@ -61,6 +62,11 @@ public class CalciteUtil {
                 columns.add(identifier.getSimple().toLowerCase());
             }
         }
+        //TODO 3.实现where
+        //TODO 4.实现limit
+
+        SqlNode whereNode = sqlSelect.getWhere();
+
         //3.读取表中数据
         // 根据列名读取数据
         RowSet rowSet = new RowSet();
@@ -110,6 +116,8 @@ public class CalciteUtil {
                 if(line == lines.get(0))continue;
                 String[] cellsData = line.split(",");
                 Cell[] cells = new Cell[column_needed_index.size()];
+                //TODO 实现where
+                //读取数据
                 //这里i表示列里面的index，不能用其表明cells，因为中间列有的不读入，所以i可能越界
                 int j = 0;
                 for (int i : column_needed_index) {

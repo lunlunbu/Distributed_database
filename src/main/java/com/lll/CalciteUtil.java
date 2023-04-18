@@ -51,15 +51,28 @@ public class CalciteUtil {
         List<String> tableList = new ArrayList<String>();
         //1.获取表名
         getTables(fromNode,tableList);
-        //2.读取表中数据
+        //2.获取所需字段
+        SqlNodeList selectList = sqlSelect.getSelectList();
+        List<String> columns = new ArrayList<String>();
+        for (SqlNode node : selectList){
+            if (node instanceof SqlIdentifier){
+                SqlIdentifier identifier = (SqlIdentifier) node;
+                columns.add(identifier.getSimple().toLowerCase());
+            }
+        }
+        System.out.println(columns);
+        //3.读取表中数据
+        //TODO 根据列名读取数据
         RowSet rowSet = new RowSet();
-        loadData(rowSet, tableList);
+        loadData(rowSet, tableList, columns);
         for (Row row : rowSet.getRows()) {
             System.out.println(Arrays.toString(row.getCells()));
         }
+
+
     }
 
-    private static void loadData(RowSet rowSet, List<String> tableList) {
+    private static void loadData(RowSet rowSet, List<String> tableList, List<String> columns) {
         for (String table : tableList) {
             table = table.toLowerCase();
             table += ".csv";
@@ -70,15 +83,28 @@ public class CalciteUtil {
                 throw new RuntimeException(table + "不存在");
             }
             //遍历读入
+            //获取所需的列名,并记录下其所在下标
+            String firstLine = lines.get(0);
+            String[] columnData = firstLine.split(",");
+            List<Integer> column_needed_index = new ArrayList<Integer>();
+            for (int i = 0; i < columnData.length; i++){
+                if (!columns.contains(columnData[i])){
+                    continue;
+                }
+                column_needed_index.add(i);
+            }
             for (String line : lines) {
+                if(line == lines.get(0))continue;
                 String[] cellsData = line.split(",");
-                Cell[] cells = new Cell[cellsData.length];
-                for (int i = 0; i < cellsData.length; i++) {
+                Cell[] cells = new Cell[column_needed_index.size()];
+                //这里i表示列里面的index，不能用其表明cells，因为中间列有的不读入，所以i可能越界
+                int j = 0;
+                for (int i : column_needed_index) {
                     Cell cell = new Cell();
                     cell.setType("string"); // 设置类型
                     cell.setSize(String.valueOf(cellsData[i].length())); // 设置大小
                     cell.setVal(cellsData[i]); // 设置值
-                    cells[i] = cell;
+                    cells[j++] = cell;
                 }
                 Row row = new Row();
                 row.setCells(cells);

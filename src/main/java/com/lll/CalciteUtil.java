@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CalciteUtil {
     public static SqlNode parserSql(String sql) {
@@ -60,13 +61,17 @@ public class CalciteUtil {
                 columns.add(identifier.getSimple().toLowerCase());
             }
         }
-        System.out.println(columns);
         //3.读取表中数据
-        //TODO 根据列名读取数据
+        // 根据列名读取数据
         RowSet rowSet = new RowSet();
         loadData(rowSet, tableList, columns);
+        //输出表名
+        System.out.println(columns.stream().collect(Collectors.joining(" , ")));
         for (Row row : rowSet.getRows()) {
-            System.out.println(Arrays.toString(row.getCells()));
+            for (Cell cell : row.getCells()){
+                System.out.print(cell.getVal() + "    ");
+            }
+            System.out.println();
         }
 
 
@@ -87,11 +92,19 @@ public class CalciteUtil {
             String firstLine = lines.get(0);
             String[] columnData = firstLine.split(",");
             List<Integer> column_needed_index = new ArrayList<Integer>();
-            for (int i = 0; i < columnData.length; i++){
-                if (!columns.contains(columnData[i])){
-                    continue;
+            //这里以所需column为主体找下表，保证select的列的顺序性
+//            for (int i = 0; i < columnData.length; i++){
+//                if (!columns.contains(columnData[i])){
+//                    continue;
+//                }
+//                column_needed_index.add(i);
+//            }
+            for (String column : columns){
+                for (int i = 0; i < columnData.length; i++) {
+                    if (column.equals(columnData[i])){
+                        column_needed_index.add(i);
+                    }
                 }
-                column_needed_index.add(i);
             }
             for (String line : lines) {
                 if(line == lines.get(0))continue;
